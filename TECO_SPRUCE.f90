@@ -9,7 +9,7 @@
     real Tau_Leaf,Tau_Wood,Tau_Root,Tau_F,Tau_C
     real Tau_Micro,Tau_slowSOM,Tau_Passive
     real gddonset,Q10,Rl0,Rs0,Rr0
-    character(len=50) parafile
+    character(len=50) parafile,outdir
     
 !   for climate file
     integer, parameter :: ilines=90000
@@ -117,10 +117,17 @@
     
     
 !   Start main loop
-    open(61,file='output/SPRUCE_yearly.txt')
-    open(62,file='output/Simu_dailyflux.txt')
-
-    open(71,file='output/Paraest.txt')
+    call getarg(4,outdir)
+    write(outfile,"(A6,A17)") outdir,"/SPRUCE_yearly.txt"
+    outfile = trim(outfile)
+    open(61,file=outfile)
+    write(outfile,"(A6,A18)") outdir,"/Simu_dailyflux.txt"
+    outfile = trim(outfile)   
+    open(62,file=outfile)
+    
+    write(outfile,"(A6,A11)") outdir,"/Paraest.txt"
+    outfile = trim(outfile)
+    open(71,file=outfile)
     if(MCMC.eq.1) GOTO 100
     yrs_eq=yr_length*0  ! spin up length 
     call TECO_simu(MCMC,Simu_dailyflux,      &
@@ -284,7 +291,7 @@
                 CALL random_number(r)
                 if(r.gt.0.95)then
                     k3=k3+1
-                    write(outfile,"(A21,I3.3,A4)") "output/Simu_dailyflux",k3,".txt"
+                    write(outfile,"(A6,A14,I3.3,A4)") outdir, "/Simu_dailyflux",k3,".txt"
                     outfile=trim(outfile)
                     open(62,file=outfile)
                     do i=1,1460
