@@ -9,7 +9,7 @@
     real Tau_Leaf,Tau_Wood,Tau_Root,Tau_F,Tau_C
     real Tau_Micro,Tau_slowSOM,Tau_Passive
     real gddonset,Q10,Rl0,Rs0,Rr0
-    character(len=50) parafile,outdir
+    character(len=120) parafile,outdir
     
 !   for climate file
     integer, parameter :: ilines=90000
@@ -26,7 +26,7 @@
 !   for observation files    
     real obs_spruce(12,1000),std(12,1000)
     real treatment
-    character(len=80) obsfile1,obsfile2,covfile
+    character(len=150) obsfile1,obsfile2,covfile
     integer len1,len2
     
 
@@ -50,7 +50,7 @@
 !! ncov: the covariance matrix gamma will be updated  !!
 !!        every ncov iterations		
     real coefhistory(ncov,npara)
-    character(len=80) outfile
+    character(len=150) outfile
     
 !   for consts parameteres
     real,dimension(3):: tauL,rhoL,rhoS
@@ -69,8 +69,7 @@
     
 !   Read parameters from file
     call getarg(1,parafile)
-       
-    !parafile='input/SPRUCE_pars.txt'
+    parafile='input/SPRUCE_pars.txt'
     call Getparameters(lat,longi,wsmax,wsmin,           &              
     &   LAIMAX,LAIMIN,rdepth,Rootmax,Stemmax,           &
     &   SapR,SapS,SLA,GLmax,GRmax,Gsmax,stom_n,         &
@@ -82,7 +81,7 @@
 !   Read climatic forcing
 !    climatefile='SPRUCE_forcing.txt'
     call getarg(2,climatefile)
-    !climatefile='input/SPRUCE_forcing.txt'
+    climatefile='input/SPRUCE_forcing.txt'
     call Getclimate(year_seq,doy_seq,hour_seq,          &
     &   forcing_data,climatefile,lines,yr_length)
 !    climatefile2='DUKE_forcing.txt'
@@ -93,7 +92,7 @@
 !    enddo
 !   Read observation data
     call getarg(3,obsfile1)
-    !obsfile1='input/SPRUCE_obs.txt'
+    obsfile1='input/SPRUCE_obs.txt'
     treatment=0.    ! Ambient temperature
     call GetObsData(obs_spruce,std,len1,obsfile1)      
             
@@ -118,16 +117,22 @@
     
 !   Start main loop
     call getarg(4,outdir)
-    write(outfile,"(A6,A17)") outdir,"/SPRUCE_yearly.txt"
+    
+    write(outfile,"(A120,A18)") trim(outdir),"/SPRUCE_yearly.txt"
     outfile = trim(outfile)
+    outfile = adjustl(outfile)
     open(61,file=outfile)
-    write(outfile,"(A6,A18)") outdir,"/Simu_dailyflux.txt"
-    outfile = trim(outfile)   
+    
+    write(outfile,"(A120,A19)") trim(outdir),"/Simu_dailyflux.txt"
+    outfile = trim(outfile)
+    outfile = adjustl(outfile)
     open(62,file=outfile)
     
-    write(outfile,"(A6,A11)") outdir,"/Paraest.txt"
+    write(outfile,"(A120,A12)") trim(outdir),"/Paraest.txt"
     outfile = trim(outfile)
+    outfile = adjustl(outfile)
     open(71,file=outfile)
+    
     if(MCMC.eq.1) GOTO 100
     yrs_eq=yr_length*0  ! spin up length 
     call TECO_simu(MCMC,Simu_dailyflux,      &
@@ -192,7 +197,10 @@
     ! initialize covariance matrix
     covexist=0
     if(covexist.eq.1)then      ! If prior covariance exists, read from file
-        covfile='output/covariance.txt'
+   
+        write(covfile,"(A120,A15)") trim(outdir),"/covariance.txt"
+        covfile = trim(covfile)
+        covfile = adjustl(covfile)
         call getCov(gamma,covfile,npara)
 
         call racine_mat(gamma,gamnew,npara)      ! square root of covariance matrix
@@ -291,8 +299,9 @@
                 CALL random_number(r)
                 if(r.gt.0.95)then
                     k3=k3+1
-                    write(outfile,"(A6,A14,I3.3,A4)") outdir, "/Simu_dailyflux",k3,".txt"
+                    write(outfile,"(A120,A15,I3.3,A4)") trim(outdir), "/Simu_dailyflux",k3,".txt"
                     outfile=trim(outfile)
+                    outfile=adjustl(outfile)
                     open(62,file=outfile)
                     do i=1,1460
                         write(62,602)i,(Simu_dailyflux(j,i),j=1,12)
@@ -364,7 +373,10 @@
 	endif
 
     enddo !isimu
-    open(72,file='output/covvariance_temp.txt')
+    write(outfile,"(A120,A21)") trim(outdir),"/covvariance_temp.txt"
+    outfile = trim(outfile)
+    outfile = adjustl(outfile)
+    open(72,file=outfile)
     do i=1,npara
         write(72,*) (gamma(j,i),j=1,npara)
     enddo
@@ -1077,7 +1089,6 @@
          enddo            !end of simulations multiple years
          
          if(MCMC.eq.0)then
-         open(62,file='output/Simu_dailyflux001.txt')
          do i=1,daily
          write(62,602)i,(Simu_dailyflux(j,i),j=1,12)
          enddo
