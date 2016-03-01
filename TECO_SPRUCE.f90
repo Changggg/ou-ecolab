@@ -31,7 +31,7 @@
     
 
 !   for MCMC
-    integer,parameter:: MCMC=0 ! 0:run model simulation; 1:data assimilation 
+    integer MCMC ! 0:run model simulation; 1:data assimilation 
     integer IDUM,upgraded,isimu
     integer, parameter :: npara=18       ! Number of parameters to be estimated
     real search_length
@@ -50,7 +50,7 @@
 !! ncov: the covariance matrix gamma will be updated  !!
 !!        every ncov iterations		
     real coefhistory(ncov,npara)
-    character(len=150) outfile
+    character(len=150) outfile,MCMCargu
     
 !   for consts parameteres
     real,dimension(3):: tauL,rhoL,rhoS
@@ -67,9 +67,12 @@
     real wcl_initial(10),QC_initial(8)
     integer yrs_eq
     
+    call getarg(5,MCMCargu)
+    read(MCMCargu,'(i1)') MCMC
+    !MCMC = 0
 !   Read parameters from file
     call getarg(1,parafile)
-    parafile='input/SPRUCE_pars.txt'
+    !parafile='input/SPRUCE_pars.txt'
     call Getparameters(lat,longi,wsmax,wsmin,           &              
     &   LAIMAX,LAIMIN,rdepth,Rootmax,Stemmax,           &
     &   SapR,SapS,SLA,GLmax,GRmax,Gsmax,stom_n,         &
@@ -81,7 +84,7 @@
 !   Read climatic forcing
 !    climatefile='SPRUCE_forcing.txt'
     call getarg(2,climatefile)
-    climatefile='input/SPRUCE_forcing.txt'
+    !climatefile='input/SPRUCE_forcing.txt'
     call Getclimate(year_seq,doy_seq,hour_seq,          &
     &   forcing_data,climatefile,lines,yr_length)
 !    climatefile2='DUKE_forcing.txt'
@@ -92,7 +95,7 @@
 !    enddo
 !   Read observation data
     call getarg(3,obsfile1)
-    obsfile1='input/SPRUCE_obs.txt'
+    !obsfile1='input/SPRUCE_obs.txt'
     treatment=0.    ! Ambient temperature
     call GetObsData(obs_spruce,std,len1,obsfile1)      
             
@@ -117,7 +120,7 @@
     
 !   Start main loop
     call getarg(4,outdir)
-    
+    !outdir = 'output'
     write(outfile,"(A120,A18)") trim(outdir),"/SPRUCE_yearly.txt"
     outfile = trim(outfile)
     outfile = adjustl(outfile)

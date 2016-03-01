@@ -1,0 +1,4 @@
+
+Format to passing arguments to TECO model
+
+./TECO.out input/SPRUCE_pars.txt input/SPRUCE_forcing.txt input/SPRUCE_obs.txt out1/ 0
