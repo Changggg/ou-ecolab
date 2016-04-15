@@ -9,7 +9,8 @@
     real Tau_Leaf,Tau_Wood,Tau_Root,Tau_F,Tau_C
     real Tau_Micro,Tau_slowSOM,Tau_Passive
     real gddonset,Q10,Rl0,Rs0,Rr0
-    character(len=120) parafile,outdir
+    character(len=120) parafile,daparfile,outdir
+    integer,dimension(35):: DApar
     
 !   for climate file
     integer, parameter :: ilines=90000
@@ -29,18 +30,23 @@
     character(len=150) obsfile1,obsfile2,covfile
     integer len1,len2
     
-
+    
 !   for MCMC
     integer MCMC ! 0:run model simulation; 1:data assimilation 
     integer IDUM,upgraded,isimu
-    integer, parameter :: npara=18       ! Number of parameters to be estimated
+!    integer, parameter :: npara=18       ! Number of parameters to be estimated
+    integer npara
     real search_length
     real J_last
     real Simu_dailyflux(12,4000)
-    real coef(npara),coefac(npara),coefnorm(npara)
-    real coefmax(npara),coefmin(npara)
+!    real coef(npara),coefac(npara),coefnorm(npara).
+!    real coefmax(npara),coefmin(npara)
     real r,fact_rejet
-    real gamma(npara,npara),gamnew(npara,npara)     ! covariance matrix
+!    real gamma(npara,npara),gamnew(npara,npara)     ! covariance matrix
+    real, allocatable :: coef(:), coefac(:), coefnorm(:)
+    real, allocatable :: coefmax(:),coefmin(:)
+    real, allocatable :: gamma(:,:),gamnew(:,:)
+    
     integer k1,k2,rejet,paraflag,k3
     integer, parameter :: nc=100
     integer, parameter :: ncov=500
@@ -49,7 +55,8 @@
 !!        acceptation rate   
 !! ncov: the covariance matrix gamma will be updated  !!
 !!        every ncov iterations		
-    real coefhistory(ncov,npara)
+!    real coefhistory(ncov,npara)
+    real, allocatable :: coefhistory(:,:)
     character(len=150) outfile,MCMCargu
     
 !   for consts parameteres
@@ -69,10 +76,10 @@
     
     call getarg(5,MCMCargu)
     read(MCMCargu,'(i1)') MCMC
-    !MCMC = 0
+!    MCMC = 1
 !   Read parameters from file
     call getarg(1,parafile)
-    !parafile='input/SPRUCE_pars.txt'
+!    parafile='input/SPRUCE_pars.txt'
     call Getparameters(lat,longi,wsmax,wsmin,           &              
     &   LAIMAX,LAIMIN,rdepth,Rootmax,Stemmax,           &
     &   SapR,SapS,SLA,GLmax,GRmax,Gsmax,stom_n,         &
@@ -81,10 +88,20 @@
     &   Tau_Micro,Tau_slowSOM,Tau_Passive,              &
     &   gddonset,Q10,RL0,Rs0,Rr0,parafile)
     
+    call getarg(6,DAparfile)
+!    DAparfile='input/SPRUCE_da_pars.txt'
+    call GetDAcheckbox(DApar,DAparfile)
+    
+    npara=sum(DApar)
+    allocate(coef(npara),coefac(npara),coefnorm(npara))
+    allocate(coefmax(npara),coefmin(npara))
+    allocate(gamma(npara,npara),gamnew(npara,npara))
+    allocate(coefhistory(ncov,npara))
+    
 !   Read climatic forcing
 !    climatefile='SPRUCE_forcing.txt'
     call getarg(2,climatefile)
-    !climatefile='input/SPRUCE_forcing.txt'
+!    climatefile='input/SPRUCE_forcing.txt'
     call Getclimate(year_seq,doy_seq,hour_seq,          &
     &   forcing_data,climatefile,lines,yr_length)
 !    climatefile2='DUKE_forcing.txt'
@@ -95,7 +112,7 @@
 !    enddo
 !   Read observation data
     call getarg(3,obsfile1)
-    !obsfile1='input/SPRUCE_obs.txt'
+!    obsfile1='input/SPRUCE_obs.txt'
     treatment=0.    ! Ambient temperature
     call GetObsData(obs_spruce,std,len1,obsfile1)      
             
@@ -120,7 +137,7 @@
     
 !   Start main loop
     call getarg(4,outdir)
-    !outdir = 'output'
+!    outdir = 'output'
     write(outfile,"(A120,A18)") trim(outdir),"/SPRUCE_yearly.txt"
     outfile = trim(outfile)
     outfile = adjustl(outfile)
@@ -376,14 +393,14 @@
 	endif
 
     enddo !isimu
-    write(outfile,"(A120,A21)") trim(outdir),"/covvariance_temp.txt"
-    outfile = trim(outfile)
-    outfile = adjustl(outfile)
-    open(72,file=outfile)
-    do i=1,npara
-        write(72,*) (gamma(j,i),j=1,npara)
-    enddo
-    close(72)    
+    !write(outfile,"(A120,A21)") trim(outdir),"/covvariance_temp.txt"
+    !outfile = trim(outfile)
+    !outfile = adjustl(outfile)
+    !open(72,file=outfile)
+    !do i=1,npara
+    !    write(72,*) (gamma(j,i),j=1,npara)
+    !enddo
+    !close(72)    
     close(61)
 
     close(71)
@@ -2884,7 +2901,39 @@
     close(12)
     return
     end
-      
+
+    
+    
+!========================================================
+! Subroutine: Read Data assimilation check box file
+    subroutine GetDAcheckbox(DApar,DAparfile)
+    
+    implicit none
+    integer,dimension(35):: DApar
+    character(len=50) DAparfile,commts
+
+    DAparfile=TRIM(DAparfile)
+
+    open(15,file=DAparfile,status='old')
+    read(15,11)commts
+    read(15,*)DApar(1),DApar(2),DApar(3),DApar(4)
+    read(15,11)commts
+    read(15,*)DApar(5),DApar(6),DApar(7),DApar(8),DApar(9)    
+    read(15,11)commts
+    read(15,*)DApar(10),DApar(11),DApar(12),DApar(13),DApar(14),DApar(15),DApar(16)
+    read(15,11)commts
+    read(15,*)DApar(17),DApar(18),DApar(19),DApar(20),DApar(21),DApar(22)
+    read(15,11)commts
+    read(15,*)DApar(23),DApar(24),DApar(25),DApar(26),DApar(27),DApar(28),DApar(29),DApar(30)
+    read(15,11)commts
+    read(15,*)DApar(31),DApar(32),DApar(33),DApar(34),DApar(35)
+11  format(a132)
+    close(15)
+    return
+    end
+    
+    
+    
 ! **********************************************************    
     subroutine getCov(gamma,covfile,npara)
     implicit none
