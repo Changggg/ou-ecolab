@@ -9,16 +9,23 @@
     real Tau_Leaf,Tau_Wood,Tau_Root,Tau_F,Tau_C
     real Tau_Micro,Tau_slowSOM,Tau_Passive
     real gddonset,Q10,Rl0,Rs0,Rr0
+    real paraest(19,30000)
+    integer seq,Pselect
     character(len=120) parafile,daparfile,outdir
+    character(len=150) paraestfile
     integer,dimension(35):: DApar
     
 !   for climate file
-    integer, parameter :: ilines=90000
+    integer, parameter :: ilines=150000
     integer, parameter :: iiterms=7
     integer,dimension(ilines):: year_seq,doy_seq,hour_seq
     real forcing_data(iiterms,ilines)
     character(len=50) climatefile
     integer yr_length,lines
+    integer,dimension(ilines):: year_seq1,doy_seq1,hour_seq1
+    real forcing_data1(iiterms,ilines)
+    character(len=50) climatefile1
+    integer yr_length1,lines1    
     integer,dimension(ilines):: year_seq2,doy_seq2,hour_seq2
     character(len=50) climatefile2
     real forcing_data2(iiterms,ilines)
@@ -72,11 +79,11 @@
     real Storage_initial,nsc_initial
     real wcl(10),QC(8)
     real wcl_initial(10),QC_initial(8)
-    integer yrs_eq
+    integer yrs_eq,rep
     
     call getarg(5,MCMCargu)
     read(MCMCargu,'(i1)') MCMC
-!    MCMC = 1
+!    MCMC = 2
 !   Read parameters from file
     call getarg(1,parafile)
 !    parafile='input/SPRUCE_pars.txt'
@@ -101,15 +108,10 @@
 !   Read climatic forcing
 !    climatefile='SPRUCE_forcing.txt'
     call getarg(2,climatefile)
-!    climatefile='input/SPRUCE_forcing.txt'
-    call Getclimate(year_seq,doy_seq,hour_seq,          &
-    &   forcing_data,climatefile,lines,yr_length)
-!    climatefile2='DUKE_forcing.txt'
-!    call Getclimate(year_seq2,doy_seq2,hour_seq2,          &
-!    &   forcing_data2,climatefile2,lines2,yr_length2)
-!    do k1=1,lines
-!        forcing_data(1,k1)=forcing_data2(1,k1)
-!    enddo
+!    climatefile1='input/SPRUCE_forcing.txt'
+    call Getclimate(year_seq1,doy_seq1,hour_seq1,          &
+    &   forcing_data1,climatefile1,lines1,yr_length1)
+
 !   Read observation data
     call getarg(3,obsfile1)
 !    obsfile1='input/SPRUCE_obs.txt'
@@ -132,7 +134,8 @@
 !         put the values into a matrix
 !   QC=(/300.,6300.,300.,119.,300.,322.,8834.,312./)
 !   QC=(/100.,800.,100.,39.,100.,122.,834.,12./)
-    QC=(/440.,700.,300.,119.,300.,322.,38340.,23120./)
+ !   QC=(/440.,700.,300.,119.,300.,322.,38340.,23120./)
+    QC=(/500.,700.,300.,119.,300.,322.,38340.,23120./)
     
     
 !   Start main loop
@@ -148,12 +151,17 @@
     outfile = adjustl(outfile)
     open(62,file=outfile)
     
-    write(outfile,"(A120,A12)") trim(outdir),"/Paraest.txt"
-    outfile = trim(outfile)
-    outfile = adjustl(outfile)
-    open(71,file=outfile)
     
     if(MCMC.eq.1) GOTO 100
+    if(MCMC.eq.2) GOTO 150
+
+    year_seq = year_seq1
+    doy_seq = doy_seq1
+    hour_seq = hour_seq1
+    forcing_data = forcing_data1
+    climatefile = climatefile1
+    lines = lines1
+    yr_length = yr_length1
     yrs_eq=yr_length*0  ! spin up length 
     call TECO_simu(MCMC,Simu_dailyflux,      &
      &        obs_spruce,              &
@@ -170,8 +178,94 @@
      &    Eavm,Edvm,Eajm,Edjm,Entrpy,gam0,gam1,gam2)    
     write(*,*)'run simulation'
     return
+150 continue    
+    !   Update posterior parameters
+    write(paraestfile,"(A120,A12)") trim(outdir),"/Paraest.txt"
+    paraestfile = trim(paraestfile)
+    paraestfile = adjustl(paraestfile)
+    call Getparaest(paraestfile,paraest,seq)
+
+    DO rep=1,1
+        
+    CALL random_number(randnum)
+    Pselect = int(seq/2+randnum*(seq-seq/2))
+    
+    Pselect = 10000
+    Tau_Leaf = paraest(2,Pselect)
+    Tau_Wood = paraest(3,Pselect)
+    Tau_Root = paraest(4,Pselect)
+    Tau_F = paraest(5,Pselect)
+    Tau_C = paraest(6,Pselect)
+    Tau_Micro = paraest(7,Pselect)
+    Tau_slowSOM = paraest(8,Pselect)
+    Tau_Passive = paraest(9,Pselect)
+    GLmax = paraest(10,Pselect)
+    GRmax = paraest(11,Pselect)
+    Gsmax = paraest(12,Pselect)
+    Vcmax0 = paraest(13,Pselect)
+    RL0 = paraest(14,Pselect)
+    Rs0 = paraest(15,Pselect)
+    Rr0 = paraest(16,Pselect)
+    Q10 = paraest(17,Pselect)
+    SLA = paraest(18,Pselect)
+    gddonset = paraest(19,Pselect)
+    
+!   Read generated climatic forcing
+    write(climatefile2,"(A31,I3.3,A4)") "input/Weathergenerate/EMforcing",rep,".csv"              
+    climatefile2=trim(climatefile2)
+    call Getclimate(year_seq,doy_seq,hour_seq,          &
+    &   forcing_data,climatefile2,lines,yr_length)
+    do k1=1,lines1
+        year_seq(k1)=year_seq1(k1)
+        doy_seq(k1)=doy_seq1(k1)
+        hour_seq(k1)=hour_seq1(k1)
+        forcing_data(1,k1)=forcing_data1(1,k1)
+        forcing_data(2,k1)=forcing_data1(2,k1)
+        forcing_data(3,k1)=forcing_data1(3,k1)
+        forcing_data(4,k1)=forcing_data1(4,k1)
+        forcing_data(5,k1)=forcing_data1(5,k1)
+        forcing_data(6,k1)=forcing_data1(6,k1)
+        forcing_data(7,k1)=forcing_data1(7,k1)
+    enddo
+    
+    write(outfile,"(A120,A15,I3.3,A4)") trim(outdir), "/Simu_dailyflux",rep,".txt"
+    outfile=trim(outfile)
+    outfile=adjustl(outfile)
+    open(62,file=outfile)
+    yrs_eq=yr_length*0  ! spin up length 
+    call TECO_simu(MCMC,Simu_dailyflux,      &
+     &        obs_spruce,              &
+     &        forcing_data,yr_length,year_seq,doy_seq,hour_seq,lines,   &
+     &        fwsoil,topfws,omega,wcl,Storage,nsc,yrs_eq,QC,    &
+     &        lat,longi,wsmax,wsmin,LAIMAX,LAIMIN,rdepth,     &
+     &        Rootmax,Stemmax,SapR,SapS,SLA,GLmax,GRmax,Gsmax,      &
+     &        stom_n,a1,Ds0,Vcmax0,extkU,xfang,alpha,               &
+     &        tau_Leaf,tau_Wood,tau_Root,tau_F,tau_C,tau_Micro,     &   ! the unit is year
+     &        tau_SlowSOM,tau_Passive,gddonset,                     &
+     &        Q10,Rl0,Rs0,Rr0,pi,tauL,rhoL,rhoS,emleaf,emsoil,&
+     &    Rconst,sigma,cpair,Patm,Trefk,H2OLv0,airMa,H2OMw,chi,Dheat,&
+     &    wleaf,gsw0,eJmx0,theta,conKc0,conKo0,Ekc,Eko,o2ci,&
+     &    Eavm,Edvm,Eajm,Edjm,Entrpy,gam0,gam1,gam2)    
+    write(*,*)'run forecasting',rep
+    close(62)
+    enddo ! END of rep
+
+    return
+    
 100 continue
 
+    write(outfile,"(A120,A12)") trim(outdir),"/Paraest.txt"
+    outfile = trim(outfile)
+    outfile = adjustl(outfile)
+    open(71,file=outfile)
+    year_seq = year_seq1
+    doy_seq = doy_seq1
+    hour_seq = hour_seq1
+    forcing_data = forcing_data1
+    climatefile = climatefile1
+    lines = lines1
+    yr_length = yr_length1
+    
     fwsoil_initial = fwsoil
     topfws_initial = topfws
     omega_initial = omega
@@ -1042,9 +1136,10 @@
                  ! write(*,*)yr,days,i,gpp,npp
                   if(isnan(gpp))then
                       write(*,*)'gpp is nan'
+                      return
                   endif
 
-
+!                write(*,*)gpp,npp,QC(1),QC(2),LAI,bmleaf,SLA 
 
               enddo              ! end of dtimes
               if((GDD5.gt.gddonset) .and. phenoset.eq.0) then
@@ -1086,16 +1181,16 @@
             
             endif
 
-             
+        write(*,*)gpp_d, NEE_d, Reco_d,QC(1),QC(2),LAI     
         enddo                         ! end of idays
-
+                
             storage=accumulation
             stor_use=Storage/times_storage_use
             if(yr.eq.yrs_eq+yr_length .and. MCMC.eq.1)then
             write(*,*)yr,LAI,gpp_yr,NPP_yr,pheno
             write(61,601)year,LAI,gpp_yr,NPP_yr,real(pheno)
             endif
-            if(MCMC.eq.0) then
+            if(MCMC.ne.1) then
                 write(*,*)year,LAI,gpp_yr,NPP_yr,pheno
                 write(61,601)year,LAI,gpp_yr,NPP_yr,Ra_yr,Rh_yr, &
                 &   Rh4_yr,Rh5_yr,Rh6_yr,Rh7_yr,Rh8_yr,GL_yr,    &
@@ -1108,7 +1203,7 @@
             onset=0
          enddo            !end of simulations multiple years
          
-         if(MCMC.eq.0)then
+         if(MCMC.ne.1)then
          do i=1,daily
          write(62,602)i,(Simu_dailyflux(j,i),j=1,12)
          enddo
@@ -2811,6 +2906,31 @@
     return
     end
 
+  
+! Subroutine 1.1 Read estimated parameters      
+    subroutine Getparaest(paraestfile,paraest,seq)
+    implicit none
+                
+    character(len=50) paraestfile
+    integer seq,m,n,istat6
+    real paraest(19,30000)
+    
+    paraestfile=TRIM(paraestfile)
+    open(15,file=paraestfile,status='old',ACTION='read',     &
+    &     IOSTAT=istat6)
+
+    m=0
+!   open and read input file for getting climate data
+    do
+    m=m+1
+    read(15,*,IOSTAT=istat6)(paraest(n,m),n=1,19)
+    if(istat6<0)exit
+    enddo
+    seq=m-1
+    close(15)
+    return
+    end
+    
 ! ====================================================================
 ! Subroutine 2. Read climatic forcing from file   
     subroutine Getclimate(year_seq,doy_seq,hour_seq,          &
