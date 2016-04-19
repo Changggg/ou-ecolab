@@ -20,14 +20,14 @@
     integer, parameter :: iiterms=7
     integer,dimension(ilines):: year_seq,doy_seq,hour_seq
     real forcing_data(iiterms,ilines)
-    character(len=50) climatefile
+    character(len=150) climatefile
     integer yr_length,lines
     integer,dimension(ilines):: year_seq1,doy_seq1,hour_seq1
     real forcing_data1(iiterms,ilines)
-    character(len=50) climatefile1
+    character(len=150) climatefile1
     integer yr_length1,lines1    
     integer,dimension(ilines):: year_seq2,doy_seq2,hour_seq2
-    character(len=50) climatefile2
+    character(len=150) climatefile2,forcingdir
     real forcing_data2(iiterms,ilines)
     integer yr_length2,lines2
     
@@ -45,7 +45,7 @@
     integer npara
     real search_length
     real J_last
-    real Simu_dailyflux(12,4000)
+    real Simu_dailyflux(12,10000)
 !    real coef(npara),coefac(npara),coefnorm(npara).
 !    real coefmax(npara),coefmin(npara)
     real r,fact_rejet
@@ -64,7 +64,8 @@
 !!        every ncov iterations		
 !    real coefhistory(ncov,npara)
     real, allocatable :: coefhistory(:,:)
-    character(len=150) outfile,MCMCargu
+    character(len=150) outfile,MCMCargu,yrargu,dyargu
+    character(len=150) Targu,CO2argu
     
 !   for consts parameteres
     real,dimension(3):: tauL,rhoL,rhoS
@@ -79,14 +80,19 @@
     real Storage_initial,nsc_initial
     real wcl(10),QC(8)
     real wcl_initial(10),QC_initial(8)
-    integer yrs_eq,rep
+    integer yrs_eq,rep,yrlim,dylim
     
     call getarg(5,MCMCargu)
     read(MCMCargu,'(i1)') MCMC
-!    MCMC = 2
+    !MCMC = 2
+    
+    yrlim = 2014
+    dylim = 365
+    Ttreat = 0.0
+    CO2treat = 380.0
 !   Read parameters from file
     call getarg(1,parafile)
-!    parafile='input/SPRUCE_pars.txt'
+    !parafile='input/SPRUCE_pars.txt'
     call Getparameters(lat,longi,wsmax,wsmin,           &              
     &   LAIMAX,LAIMIN,rdepth,Rootmax,Stemmax,           &
     &   SapR,SapS,SLA,GLmax,GRmax,Gsmax,stom_n,         &
@@ -96,7 +102,7 @@
     &   gddonset,Q10,RL0,Rs0,Rr0,parafile)
     
     call getarg(6,DAparfile)
-!    DAparfile='input/SPRUCE_da_pars.txt'
+    !DAparfile='input/SPRUCE_da_pars.txt'
     call GetDAcheckbox(DApar,DAparfile)
     
     npara=sum(DApar)
@@ -108,13 +114,13 @@
 !   Read climatic forcing
 !    climatefile='SPRUCE_forcing.txt'
     call getarg(2,climatefile)
-!    climatefile1='input/SPRUCE_forcing.txt'
+    !climatefile1='input/SPRUCE_forcing.txt'
     call Getclimate(year_seq1,doy_seq1,hour_seq1,          &
     &   forcing_data1,climatefile1,lines1,yr_length1)
 
 !   Read observation data
     call getarg(3,obsfile1)
-!    obsfile1='input/SPRUCE_obs.txt'
+    !obsfile1='input/SPRUCE_obs.txt'
     treatment=0.    ! Ambient temperature
     call GetObsData(obs_spruce,std,len1,obsfile1)      
             
@@ -140,7 +146,7 @@
     
 !   Start main loop
     call getarg(4,outdir)
-!    outdir = 'output'
+    !outdir = 'output'
     write(outfile,"(A120,A18)") trim(outdir),"/SPRUCE_yearly.txt"
     outfile = trim(outfile)
     outfile = adjustl(outfile)
@@ -164,7 +170,7 @@
     yr_length = yr_length1
     yrs_eq=yr_length*0  ! spin up length 
     call TECO_simu(MCMC,Simu_dailyflux,      &
-     &        obs_spruce,              &
+     &        obs_spruce,yrlim,dylim,Ttreat,CO2treat,              &
      &        forcing_data,yr_length,year_seq,doy_seq,hour_seq,lines,   &
      &        fwsoil,topfws,omega,wcl,Storage,nsc,yrs_eq,QC,    &
      &        lat,longi,wsmax,wsmin,LAIMAX,LAIMIN,rdepth,     &
@@ -184,8 +190,22 @@
     paraestfile = trim(paraestfile)
     paraestfile = adjustl(paraestfile)
     call Getparaest(paraestfile,paraest,seq)
-
-    DO rep=1,1
+    
+    call getarg(8,yrargu)
+    read(yrargu,'(i4)') yrlim
+    !yrlim = 2024
+    call getarg(9,dyargu)
+    read(dyargu,'(i3)') dylim
+    !dylim = 365
+    call getarg(10,Targu)
+    read(Targu,'(f9.3)') Ttreat
+    !Ttreat = 9.0
+    call getarg(11,CO2argu) 
+    read(CO2argu,'(f9.3)') CO2treat
+    !CO2treat = 380.0
+    
+    
+    DO rep=1,100
         
     CALL random_number(randnum)
     Pselect = int(seq/2+randnum*(seq-seq/2))
@@ -211,8 +231,11 @@
     gddonset = paraest(19,Pselect)
     
 !   Read generated climatic forcing
-    write(climatefile2,"(A31,I3.3,A4)") "input/Weathergenerate/EMforcing",rep,".csv"              
+    call getarg(7,forcingdir)
+!    forcingdir = 'input/Weathergenerate'
+    write(climatefile2,"(A120,A10,I3.3,A4)") trim(forcingdir),"/EMforcing",rep,".csv"
     climatefile2=trim(climatefile2)
+    climatefile2=adjustl(climatefile2)
     call Getclimate(year_seq,doy_seq,hour_seq,          &
     &   forcing_data,climatefile2,lines,yr_length)
     do k1=1,lines1
@@ -234,7 +257,7 @@
     open(62,file=outfile)
     yrs_eq=yr_length*0  ! spin up length 
     call TECO_simu(MCMC,Simu_dailyflux,      &
-     &        obs_spruce,              &
+     &        obs_spruce,yrlim,dylim,Ttreat,CO2treat,              &
      &        forcing_data,yr_length,year_seq,doy_seq,hour_seq,lines,   &
      &        fwsoil,topfws,omega,wcl,Storage,nsc,yrs_eq,QC,    &
      &        lat,longi,wsmax,wsmin,LAIMAX,LAIMIN,rdepth,     &
@@ -375,7 +398,7 @@
         gddonset=coef(18)
         yrs_eq = 0
         call TECO_simu(MCMC,Simu_dailyflux,            &
-        &        obs_spruce,              &
+        &        obs_spruce,yrlim,dylim,Ttreat,CO2treat,              &
         &        forcing_data,yr_length,year_seq,doy_seq,hour_seq,lines,   &
         &        fwsoil,topfws,omega,wcl,Storage,nsc,yrs_eq,QC,         &
         &        lat,longi,wsmax,wsmin,LAIMAX,LAIMIN,rdepth,     &
@@ -504,7 +527,7 @@
 
 ! ====================================================================
     subroutine TECO_simu(MCMC,Simu_dailyflux,      &
-     &        obs_spruce,              &
+     &        obs_spruce,yrlim,dylim,Ttreat,CO2treat,        &
      &        forcing_data,yr_length,year_seq,doy_seq,hour_seq,lines,   &
      &        fwsoil,topfws,omega,wcl,Storage,nsc,yrs_eq,QC,            &
      &        lat,longi,wsmax,wsmin,LAIMAX,LAIMIN,rdepth,     &
@@ -523,17 +546,17 @@
     real fwsoil_yr,omega_yr,topfws_yr, difference,diff_yr,diff_d
             
       integer, parameter :: iiterms=7            ! 9 for Duke forest FACE
-      integer, parameter :: ilines=90000         ! the maxmum records of Duke Face, 1998~2007
+      integer, parameter :: ilines=150000         ! the maxmum records of Duke Face, 1998~2007
       real, parameter:: times_storage_use=720.   ! 720 hours, 30 days
       integer  lines,idays,MCMC
       integer,dimension(ilines):: year_seq,doy_seq,hour_seq
       real forcing_data(iiterms,ilines),input_data(iiterms,ilines)
-      real Simu_dailyflux(12,4000)
+      real Simu_dailyflux(12,10000)
       real obs_spruce(12,1000)
       integer pheno,phenoset
 !      site specific parameters
       real lat,longi,rdepth,LAIMAX,LAIMIN
-      real wsmax,wsmin,co2ca
+      real wsmax,wsmin,co2ca,CO2treat
       real tau_L,tau_W,tau_R
       real tau_F,tau_C,tau_Micr,tau_Slow,tau_Pass
       real TauC(8)
@@ -605,7 +628,7 @@
       real Rootmax,Stemmax,SapS,SapR,StemSap,RootSap
       REAL ws,wdepth
 !      climate variables for every day
-      real Ta,Tair,Ts,Tsoil
+      real Ta,Tair,Ts,Tsoil,Ttreat
       real doy,hour,Dair,Rh,radsol
       real PAR
 !      output daily means of driving variables
@@ -653,6 +676,7 @@
       integer dtimes,yr_length
       integer num_scen,isite
       integer idoy,ihour,ileaf,first_year
+      integer dylim,yrlim
 
 
 !     Default C/N ratios of Oak Ridge FACE
@@ -805,9 +829,7 @@
 
 !!     end of leap year
              do days=1,idays !the days of a year
-                 if(days.gt.72)then
-!                     write(*,*)'pause'
-                 endif
+
 !             Nitrogen fertilization since 2004 in Oak Ridge
 !              if(yr>yrs_eq+5.and.days==135)then
 !                  QNminer=QNminer+N_fert     !(20 gN/yr/m2,N fertiliztion in Spring)
@@ -893,9 +915,13 @@
                   !!       for Duke Forest
                   Tair=input_data(1,m)   ! Tair
                   Tsoil=input_data(2,m)    ! SLT
+                  if (yr .gt. 4)then
+                      Tair = Tair + Ttreat
+                      Tsoil = Tsoil + Ttreat
+                  endif                  
                   RH=input_data(3,m)
                   Dair=input_data(4,m)       !air water vapour defficit? Unit Pa
-                  co2ca=380.0*1.0E-6 ! CO2 concentration,ppm-->1.0E-6
+                  co2ca=CO2treat*1.0E-6 ! CO2 concentration,ppm-->1.0E-6
 !                  if(isite==2.and.yr>yrs_eq)then
 !                      co2ca=(input_data(5,m)+200.)*1.0E-6
 !                  endif
@@ -912,7 +938,6 @@
                   eairP = esat(Tair)*RH/100.             ! Added for SPRUCE, due to lack of VPD data
                   Dair=esat(Tair)-eairP
                   radsol=AMAX1(radsol,0.01)
-
                   hoy=hoy+1
 
                 m=m+1											
@@ -945,9 +970,6 @@
                   Vcmx0 = Vcmax0*SNvcmax*1.0e-6
 !                  eJmx0 = 2.7*Vcmx0  ! original
                   eJmx0 = 1.67*Vcmx0 ! Weng 02/21/2011 Medlyn et al. 2002
-                  if(yr.eq.2 .and. days.eq.124 .and. i.eq.1)then
-!                      write(*,*)'pause'
-                  endif
                   
                   call canopy(gpp,evap,transp,Acanop,Hcanop,Rsoilabs,  & ! outputs
      &              fwsoil,topfws, &                   ! from soil model
@@ -1133,13 +1155,10 @@
 !                 numbering         
                   n=n+1
 
-                 ! write(*,*)yr,days,i,gpp,npp
                   if(isnan(gpp))then
                       write(*,*)'gpp is nan'
                       return
                   endif
-
-!                write(*,*)gpp,npp,QC(1),QC(2),LAI,bmleaf,SLA 
 
               enddo              ! end of dtimes
               if((GDD5.gt.gddonset) .and. phenoset.eq.0) then
@@ -1180,8 +1199,7 @@
             Simu_dailyflux(12,daily)=LAI !QC(1)/(QC(1)+QC(4)) 
             
             endif
-
-        write(*,*)gpp_d, NEE_d, Reco_d,QC(1),QC(2),LAI     
+            if(yr.ge.(yrlim-first_year+1) .and. days.ge.dylim) goto 650
         enddo                         ! end of idays
                 
             storage=accumulation
@@ -1203,7 +1221,7 @@
             onset=0
          enddo            !end of simulations multiple years
          
-         if(MCMC.ne.1)then
+650      if(MCMC.ne.1)then
          do i=1,daily
          write(62,602)i,(Simu_dailyflux(j,i),j=1,12)
          enddo
@@ -2937,7 +2955,7 @@
     &   forcing_data,climatefile,lines,yr_length)
     
     implicit none
-    integer, parameter :: ilines=90000
+    integer, parameter :: ilines=150000
     integer, parameter :: iiterms=7
     integer,dimension(ilines):: year_seq,doy_seq,hour_seq
     real forcing_data(iiterms,ilines)
@@ -3079,7 +3097,7 @@
             &   J_last,upgraded)
     
     implicit none
-    real Simu_dailyflux(12,4000)
+    real Simu_dailyflux(12,10000)
     real obs_spruce(12,1000),std(12,1000)
     integer day
     real J_new,J_last,delta_J,var2
