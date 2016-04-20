@@ -84,7 +84,7 @@
     
     call getarg(5,MCMCargu)
     read(MCMCargu,'(i1)') MCMC
-    MCMC = 0
+    !MCMC = 0
     
     yrlim = 2014
     dylim = 365
@@ -92,7 +92,7 @@
     CO2treat = 380.0
 !   Read parameters from file
     call getarg(1,parafile)
-    parafile='input/SPRUCE_pars.txt'
+    !parafile='input/SPRUCE_pars.txt'
     call Getparameters(lat,longi,wsmax,wsmin,           &              
     &   LAIMAX,LAIMIN,rdepth,Rootmax,Stemmax,           &
     &   SapR,SapS,SLA,GLmax,GRmax,Gsmax,stom_n,         &
@@ -102,7 +102,7 @@
     &   gddonset,Q10,RL0,Rs0,Rr0,parafile)
     
     call getarg(6,DAparfile)
-    DAparfile='input/SPRUCE_da_pars.txt'
+    !DAparfile='input/SPRUCE_da_pars.txt'
     call GetDAcheckbox(DApar,DAparfile)
     
     npara=sum(DApar)
@@ -114,13 +114,13 @@
 !   Read climatic forcing
 !    climatefile='SPRUCE_forcing.txt'
     call getarg(2,climatefile)
-    climatefile1='input/SPRUCE_forcing.txt'
+    !climatefile1='input/SPRUCE_forcing.txt'
     call Getclimate(year_seq1,doy_seq1,hour_seq1,          &
     &   forcing_data1,climatefile1,lines1,yr_length1)
 
 !   Read observation data
     call getarg(3,obsfile1)
-    obsfile1='input/SPRUCE_obs.txt'
+    !obsfile1='input/SPRUCE_obs.txt'
     treatment=0.    ! Ambient temperature
     call GetObsData(obs_spruce,std,len1,obsfile1)      
             
@@ -146,7 +146,7 @@
     
 !   Start main loop
     call getarg(4,outdir)
-    outdir = 'output'
+    !outdir = 'output'
     write(outfile,"(A120,A18)") trim(outdir),"/SPRUCE_yearly.txt"
     outfile = trim(outfile)
     outfile = adjustl(outfile)
@@ -193,16 +193,16 @@
     
     call getarg(8,yrargu)
     read(yrargu,'(i4)') yrlim
-    yrlim = 2024
+    !yrlim = 2024
     call getarg(9,dyargu)
     read(dyargu,'(i3)') dylim
-    dylim = 365
+    !dylim = 365
     call getarg(10,Targu)
     read(Targu,'(f9.3)') Ttreat
-    Ttreat = 0.0
+    !Ttreat = 0.0
     call getarg(11,CO2argu) 
     read(CO2argu,'(f9.3)') CO2treat
-    CO2treat = 380.0
+    !CO2treat = 380.0
     
     
     DO rep=1,100
@@ -232,7 +232,7 @@
     
 !   Read generated climatic forcing
     call getarg(7,forcingdir)
-    forcingdir = 'input/Weathergenerate'
+    !forcingdir = 'input/Weathergenerate'
     write(climatefile2,"(A120,A10,I3.3,A4)") trim(forcingdir),"/EMforcing",rep,".csv"
     climatefile2=trim(climatefile2)
     climatefile2=adjustl(climatefile2)
