@@ -84,7 +84,7 @@
     
     call getarg(5,MCMCargu)
     read(MCMCargu,'(i1)') MCMC
-    !MCMC = 2
+    MCMC = 0
     
     yrlim = 2014
     dylim = 365
@@ -92,7 +92,7 @@
     CO2treat = 380.0
 !   Read parameters from file
     call getarg(1,parafile)
-    !parafile='input/SPRUCE_pars.txt'
+    parafile='input/SPRUCE_pars.txt'
     call Getparameters(lat,longi,wsmax,wsmin,           &              
     &   LAIMAX,LAIMIN,rdepth,Rootmax,Stemmax,           &
     &   SapR,SapS,SLA,GLmax,GRmax,Gsmax,stom_n,         &
@@ -102,7 +102,7 @@
     &   gddonset,Q10,RL0,Rs0,Rr0,parafile)
     
     call getarg(6,DAparfile)
-    !DAparfile='input/SPRUCE_da_pars.txt'
+    DAparfile='input/SPRUCE_da_pars.txt'
     call GetDAcheckbox(DApar,DAparfile)
     
     npara=sum(DApar)
@@ -114,13 +114,13 @@
 !   Read climatic forcing
 !    climatefile='SPRUCE_forcing.txt'
     call getarg(2,climatefile)
-    !climatefile1='input/SPRUCE_forcing.txt'
+    climatefile1='input/SPRUCE_forcing.txt'
     call Getclimate(year_seq1,doy_seq1,hour_seq1,          &
     &   forcing_data1,climatefile1,lines1,yr_length1)
 
 !   Read observation data
     call getarg(3,obsfile1)
-    !obsfile1='input/SPRUCE_obs.txt'
+    obsfile1='input/SPRUCE_obs.txt'
     treatment=0.    ! Ambient temperature
     call GetObsData(obs_spruce,std,len1,obsfile1)      
             
@@ -146,13 +146,13 @@
     
 !   Start main loop
     call getarg(4,outdir)
-    !outdir = 'output'
+    outdir = 'output'
     write(outfile,"(A120,A18)") trim(outdir),"/SPRUCE_yearly.txt"
     outfile = trim(outfile)
     outfile = adjustl(outfile)
     open(61,file=outfile)
     
-    write(outfile,"(A120,A19)") trim(outdir),"/Simu_dailyflux.txt"
+    write(outfile,"(A120,A22)") trim(outdir),"/Simu_dailyflux001.txt"
     outfile = trim(outfile)
     outfile = adjustl(outfile)
     open(62,file=outfile)
@@ -193,16 +193,16 @@
     
     call getarg(8,yrargu)
     read(yrargu,'(i4)') yrlim
-    !yrlim = 2024
+    yrlim = 2024
     call getarg(9,dyargu)
     read(dyargu,'(i3)') dylim
-    !dylim = 365
+    dylim = 365
     call getarg(10,Targu)
     read(Targu,'(f9.3)') Ttreat
-    !Ttreat = 9.0
+    Ttreat = 0.0
     call getarg(11,CO2argu) 
     read(CO2argu,'(f9.3)') CO2treat
-    !CO2treat = 380.0
+    CO2treat = 380.0
     
     
     DO rep=1,100
@@ -210,7 +210,7 @@
     CALL random_number(randnum)
     Pselect = int(seq/2+randnum*(seq-seq/2))
     
-    Pselect = 10000
+    !Pselect = 10000
     Tau_Leaf = paraest(2,Pselect)
     Tau_Wood = paraest(3,Pselect)
     Tau_Root = paraest(4,Pselect)
@@ -232,7 +232,7 @@
     
 !   Read generated climatic forcing
     call getarg(7,forcingdir)
-!    forcingdir = 'input/Weathergenerate'
+    forcingdir = 'input/Weathergenerate'
     write(climatefile2,"(A120,A10,I3.3,A4)") trim(forcingdir),"/EMforcing",rep,".csv"
     climatefile2=trim(climatefile2)
     climatefile2=adjustl(climatefile2)
@@ -255,6 +255,20 @@
     outfile=trim(outfile)
     outfile=adjustl(outfile)
     open(62,file=outfile)
+    fwsoil=1.0
+    topfws=1.0
+    omega=1.0
+    do i=1,10
+        wcl(i)=wsmax/100.
+    enddo 
+    Storage=32.09           !g C/m2
+    nsc=85.35
+!         put the values into a matrix
+!   QC=(/300.,6300.,300.,119.,300.,322.,8834.,312./)
+!   QC=(/100.,800.,100.,39.,100.,122.,834.,12./)
+ !   QC=(/440.,700.,300.,119.,300.,322.,38340.,23120./)
+    QC=(/500.,700.,300.,119.,300.,322.,38340.,23120./)
+    
     yrs_eq=yr_length*0  ! spin up length 
     call TECO_simu(MCMC,Simu_dailyflux,      &
      &        obs_spruce,yrlim,dylim,Ttreat,CO2treat,              &
