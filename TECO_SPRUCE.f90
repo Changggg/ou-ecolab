@@ -13,7 +13,10 @@
     integer seq,Pselect
     character(len=120) parafile,daparfile,outdir
     character(len=150) paraestfile
-    integer,dimension(35):: DApar
+    integer,parameter :: partotal=35
+    integer,dimension(partotal):: DApar
+    real,dimension(partotal) :: parval,parmin,parmax
+    character(len=250) indexstring
     
 !   for climate file
     integer, parameter :: ilines=150000
@@ -53,6 +56,7 @@
     real, allocatable :: coef(:), coefac(:), coefnorm(:)
     real, allocatable :: coefmax(:),coefmin(:)
     real, allocatable :: gamma(:,:),gamnew(:,:)
+    integer,allocatable :: coefindex(:)
     
     integer k1,k2,rejet,paraflag,k3
     integer, parameter :: nc=100
@@ -81,11 +85,12 @@
     real wcl(10),QC(8)
     real wcl_initial(10),QC_initial(8)
     integer yrs_eq,rep,yrlim,dylim
+    character(len=150) my_fmt
     
     call getarg(5,MCMCargu)
     read(MCMCargu,'(i1)') MCMC
-    !MCMC = 0
-    
+    !MCMC = 2
+ 
     yrlim = 2014
     dylim = 365
     Ttreat = 0.0
@@ -100,16 +105,17 @@
     &   Tau_Leaf,Tau_Wood,Tau_Root,Tau_F,Tau_C,         &
     &   Tau_Micro,Tau_slowSOM,Tau_Passive,              &
     &   gddonset,Q10,RL0,Rs0,Rr0,parafile)
+    parval = (/lat,longi,wsmax,wsmin,           &              
+    &   LAIMAX,LAIMIN,rdepth,Rootmax,Stemmax,           &
+    &   SapR,SapS,SLA,GLmax,GRmax,Gsmax,stom_n,         &
+    &   a1,Ds0,Vcmax0,extkU,xfang,alpha,                 &
+    &   Tau_Leaf,Tau_Wood,Tau_Root,Tau_F,Tau_C,         &
+    &   Tau_Micro,Tau_slowSOM,Tau_Passive,              &
+    &   gddonset,Q10,RL0,Rs0,Rr0/)
     
     call getarg(6,DAparfile)
     !DAparfile='input/SPRUCE_da_pars.txt'
-    call GetDAcheckbox(DApar,DAparfile)
-    
-    npara=sum(DApar)
-    allocate(coef(npara),coefac(npara),coefnorm(npara))
-    allocate(coefmax(npara),coefmin(npara))
-    allocate(gamma(npara,npara),gamnew(npara,npara))
-    allocate(coefhistory(ncov,npara))
+    call GetDAcheckbox(DApar,parmin,parmax,DAparfile)
     
 !   Read climatic forcing
 !    climatefile='SPRUCE_forcing.txt'
@@ -189,8 +195,11 @@
     write(paraestfile,"(A120,A12)") trim(outdir),"/Paraest.txt"
     paraestfile = trim(paraestfile)
     paraestfile = adjustl(paraestfile)
-    call Getparaest(paraestfile,paraest,seq)
-    
+    call Getparaest(paraestfile,paraest,seq,npara,indexstring)
+    allocate(coefindex(npara))
+    write (my_fmt, '(a,i0,a)') '(',npara,'I12)'
+    read(indexstring,my_fmt) coefindex
+
     call getarg(8,yrargu)
     read(yrargu,'(i4)') yrlim
     !yrlim = 2024
@@ -211,24 +220,27 @@
     Pselect = int(seq/2+randnum*(seq-seq/2))
     
     !Pselect = 10000
-    Tau_Leaf = paraest(2,Pselect)
-    Tau_Wood = paraest(3,Pselect)
-    Tau_Root = paraest(4,Pselect)
-    Tau_F = paraest(5,Pselect)
-    Tau_C = paraest(6,Pselect)
-    Tau_Micro = paraest(7,Pselect)
-    Tau_slowSOM = paraest(8,Pselect)
-    Tau_Passive = paraest(9,Pselect)
-    GLmax = paraest(10,Pselect)
-    GRmax = paraest(11,Pselect)
-    Gsmax = paraest(12,Pselect)
-    Vcmax0 = paraest(13,Pselect)
-    RL0 = paraest(14,Pselect)
-    Rs0 = paraest(15,Pselect)
-    Rr0 = paraest(16,Pselect)
-    Q10 = paraest(17,Pselect)
-    SLA = paraest(18,Pselect)
-    gddonset = paraest(19,Pselect)
+    do k1=1,npara
+        parval(coefindex(k1))=paraest(k1+1,Pselect)
+    enddo
+        SLA = parval(12)
+        GLmax = parval(13)
+        GRmax = parval(14)
+        Gsmax = parval(15)
+        Vcmax0 = parval(19)
+        Tau_Leaf = parval(23)
+        Tau_Wood = parval(24)
+        Tau_Root = parval(25)
+        Tau_F = parval(26)
+        Tau_C = parval(27)
+        Tau_Micro = parval(28)
+        Tau_slowSOM = parval(29)
+        Tau_Passive = parval(30)
+        gddonset = parval(31)
+        Q10 = parval(32)
+        RL0 = parval(33)
+        Rs0 = parval(34)
+        Rr0 = parval(35)
     
 !   Read generated climatic forcing
     call getarg(7,forcingdir)
@@ -312,39 +324,30 @@
     QC_initial = QC
 !   end of spin up
     
-    
+    npara=sum(DApar)
+    allocate(coef(npara),coefac(npara),coefnorm(npara))
+    allocate(coefindex(npara))
+    allocate(coefmax(npara),coefmin(npara))
+    allocate(gamma(npara,npara),gamnew(npara,npara))
+    allocate(coefhistory(ncov,npara))
 !	simulation begins here
     J_last=9000000.0
     IDUM = 542
     upgraded=0
     new=0
     k3=0
-    
-    
-    coef(1)=Tau_Leaf
-    coef(2)=Tau_Wood
-    coef(3)=Tau_Root
-    coef(4)=Tau_F
-    coef(5)=Tau_C
-    coef(6)=Tau_Micro
-    coef(7)=Tau_slowSOM
-    coef(8)=Tau_Passive
-    coef(9)=GLmax
-    coef(10)=GRmax
-    coef(11)=Gsmax
-    coef(12)=Vcmax0
-    coef(13)=RL0
-    coef(14)=Rs0
-    coef(15)=Rr0
-    coef(16)=Q10
-    coef(17)=SLA
-    coef(18)=gddonset
-
-    coefmax=(/3.0, 800.0, 2.0, 0.5, 20.0, 0.5, 1000.0, 4000.0,   &
-        &   50.0, 30.0, 30.0, 180.0, 45.0, 10.5, 45.0, 4.0, 200., 160./)
-    coefmin=(/0.5, 5.0, 0.3, 0.1, 1.0, 0.05, 5.0, 500.0,    &
-        &   10.0, 10.0, 10.0, 14.0, 10.0, 4.5,  10.0, 1.0, 10., 100./)
-        
+    j=0
+    do i=1,35
+       if (DApar(i).eq. 1) then
+           j=j+1
+           coef(j)=parval(i)
+           coefindex(j)=i
+           coefmin(j)=parmin(i)
+           coefmax(j)=parmax(i)
+       endif
+    enddo
+    write(71,*) npara
+    write(71,*)(coefindex(i),i=1,npara)
     ! initialize covariance matrix
     covexist=0
     if(covexist.eq.1)then      ! If prior covariance exists, read from file
@@ -392,24 +395,28 @@
         endif
 
 !         update parameters
-        Tau_Leaf=coef(1)
-        Tau_Wood=coef(2)
-        Tau_Root=coef(3)
-        Tau_F=coef(4)
-        Tau_C=coef(5)
-        Tau_Micro=coef(6)
-        Tau_slowSOM=coef(7)
-        Tau_Passive=coef(8)
-        GLmax=coef(9)
-        GRmax=coef(10)
-        Gsmax=coef(11)
-        Vcmax0=coef(12)
-        RL0=coef(13)
-        Rs0=coef(14)
-        Rr0=coef(15)
-        Q10=coef(16)
-        SLA=coef(17)
-        gddonset=coef(18)
+        do k1=1,npara
+            parval(coefindex(k1))=coef(k1)
+        enddo
+        SLA = parval(12)
+        GLmax = parval(13)
+        GRmax = parval(14)
+        Gsmax = parval(15)
+        Vcmax0 = parval(19)
+        Tau_Leaf = parval(23)
+        Tau_Wood = parval(24)
+        Tau_Root = parval(25)
+        Tau_F = parval(26)
+        Tau_C = parval(27)
+        Tau_Micro = parval(28)
+        Tau_slowSOM = parval(29)
+        Tau_Passive = parval(30)
+        gddonset = parval(31)
+        Q10 = parval(32)
+        RL0 = parval(33)
+        Rs0 = parval(34)
+        Rr0 = parval(35)
+
         yrs_eq = 0
         call TECO_simu(MCMC,Simu_dailyflux,            &
         &        obs_spruce,yrlim,dylim,Ttreat,CO2treat,              &
@@ -445,7 +452,8 @@
             endif
             coefhistory(new,:)=coefnorm
             if(new.ge.ncov)new=0
-            write(71,701)upgraded,(coef(i),i=1,npara)
+            write (my_fmt, '(a,i0,a)') '(i12,",",',npara,'(F15.4,","))'
+            write(71,my_fmt)upgraded,(coef(i),i=1,npara)
             if(upgraded.gt.1000 .and. k3.lt.500)then
                 CALL random_number(r)
                 if(r.gt.0.95)then
@@ -473,7 +481,7 @@
         Storage=Storage_initial
         nsc=nsc_initial
         QC = QC_initial
-701     format(I12,",",18(F15.4,","))           
+      
         write(*,*)isimu,upgraded
     
     	! updates of the multiplicative constant
@@ -535,6 +543,13 @@
     close(61)
 
     close(71)
+    
+    deallocate(coef,coefac,coefnorm)
+    deallocate(coefindex)
+    deallocate(coefmax,coefmin)
+    deallocate(gamma,gamnew)
+    deallocate(coefhistory)
+    
     write(*,*)'run MCMC'
     end
 
@@ -2938,24 +2953,30 @@
     return
     end
 
-  
+!================================================================  
 ! Subroutine 1.1 Read estimated parameters      
-    subroutine Getparaest(paraestfile,paraest,seq)
+    subroutine Getparaest(paraestfile,paraest,seq,npara,indexstring)
     implicit none
                 
     character(len=50) paraestfile
     integer seq,m,n,istat6
     real paraest(19,30000)
-    
+    integer npara
+    character(len=250) indexstring
+
     paraestfile=TRIM(paraestfile)
     open(15,file=paraestfile,status='old',ACTION='read',     &
     &     IOSTAT=istat6)
+
+    read(15,*) npara
+    read(15,'(A)') indexstring
+
 
     m=0
 !   open and read input file for getting climate data
     do
     m=m+1
-    read(15,*,IOSTAT=istat6)(paraest(n,m),n=1,19)
+    read(15,*,IOSTAT=istat6)(paraest(n,m),n=1,(npara+1))
     if(istat6<0)exit
     enddo
     seq=m-1
@@ -3058,10 +3079,11 @@
     
 !========================================================
 ! Subroutine: Read Data assimilation check box file
-    subroutine GetDAcheckbox(DApar,DAparfile)
+    subroutine GetDAcheckbox(DApar,parmin,parmax,DAparfile)
     
     implicit none
     integer,dimension(35):: DApar
+    real,dimension(35):: parmin,parmax
     character(len=50) DAparfile,commts
 
     DAparfile=TRIM(DAparfile)
@@ -3079,6 +3101,32 @@
     read(15,*)DApar(23),DApar(24),DApar(25),DApar(26),DApar(27),DApar(28),DApar(29),DApar(30)
     read(15,11)commts
     read(15,*)DApar(31),DApar(32),DApar(33),DApar(34),DApar(35)
+    
+    read(15,11)commts
+    read(15,*)parmin(1),parmin(2),parmin(3),parmin(4)
+    read(15,11)commts
+    read(15,*)parmin(5),parmin(6),parmin(7),parmin(8),parmin(9)    
+    read(15,11)commts
+    read(15,*)parmin(10),parmin(11),parmin(12),parmin(13),parmin(14),parmin(15),parmin(16)
+    read(15,11)commts
+    read(15,*)parmin(17),parmin(18),parmin(19),parmin(20),parmin(21),parmin(22)
+    read(15,11)commts
+    read(15,*)parmin(23),parmin(24),parmin(25),parmin(26),parmin(27),parmin(28),parmin(29),parmin(30)
+    read(15,11)commts
+    read(15,*)parmin(31),parmin(32),parmin(33),parmin(34),parmin(35)
+    
+    read(15,11)commts
+    read(15,*)parmax(1),parmax(2),parmax(3),parmax(4)
+    read(15,11)commts
+    read(15,*)parmax(5),parmax(6),parmax(7),parmax(8),parmax(9)    
+    read(15,11)commts
+    read(15,*)parmax(10),parmax(11),parmax(12),parmax(13),parmax(14),parmax(15),parmax(16)
+    read(15,11)commts
+    read(15,*)parmax(17),parmax(18),parmax(19),parmax(20),parmax(21),parmax(22)
+    read(15,11)commts
+    read(15,*)parmax(23),parmax(24),parmax(25),parmax(26),parmax(27),parmax(28),parmax(29),parmax(30)
+    read(15,11)commts
+    read(15,*)parmax(31),parmax(32),parmax(33),parmax(34),parmax(35)
 11  format(a132)
     close(15)
     return
