@@ -87,9 +87,6 @@
     integer yrs_eq,rep,yrlim,dylim
     character(len=150) my_fmt
     
-    call getarg(5,MCMCargu)
-    read(MCMCargu,'(i1)') MCMC
-    !MCMC = 2
  
     yrlim = 2014
     dylim = 365
@@ -113,13 +110,10 @@
     &   Tau_Micro,Tau_slowSOM,Tau_Passive,              &
     &   gddonset,Q10,RL0,Rs0,Rr0/)
     
-    call getarg(6,DAparfile)
-    !DAparfile='input/SPRUCE_da_pars.txt'
-    call GetDAcheckbox(DApar,parmin,parmax,DAparfile)
     
 !   Read climatic forcing
 !    climatefile='SPRUCE_forcing.txt'
-    call getarg(2,climatefile)
+    call getarg(2,climatefile1)
     !climatefile1='input/SPRUCE_forcing.txt'
     call Getclimate(year_seq1,doy_seq1,hour_seq1,          &
     &   forcing_data1,climatefile1,lines1,yr_length1)
@@ -163,7 +157,14 @@
     outfile = adjustl(outfile)
     open(62,file=outfile)
     
-    
+    call getarg(5,MCMCargu)
+    read(MCMCargu,'(i1)') MCMC
+    !MCMC = 0
+
+    call getarg(6,DAparfile)
+    !DAparfile='input/SPRUCE_da_pars.txt'
+    call GetDAcheckbox(DApar,parmin,parmax,DAparfile)
+
     if(MCMC.eq.1) GOTO 100
     if(MCMC.eq.2) GOTO 150
 
@@ -202,16 +203,16 @@
 
     call getarg(8,yrargu)
     read(yrargu,'(i4)') yrlim
-    !yrlim = 2024
+    yrlim = 2024
     call getarg(9,dyargu)
     read(dyargu,'(i3)') dylim
-    !dylim = 365
+    dylim = 365
     call getarg(10,Targu)
     read(Targu,'(f9.3)') Ttreat
-    !Ttreat = 0.0
+    Ttreat = 0.0
     call getarg(11,CO2argu) 
     read(CO2argu,'(f9.3)') CO2treat
-    !CO2treat = 380.0
+    CO2treat = 380.0
     
     
     DO rep=1,100
@@ -244,7 +245,7 @@
     
 !   Read generated climatic forcing
     call getarg(7,forcingdir)
-    !forcingdir = 'input/Weathergenerate'
+    forcingdir = 'input/Weathergenerate'
     write(climatefile2,"(A120,A10,I3.3,A4)") trim(forcingdir),"/EMforcing",rep,".csv"
     climatefile2=trim(climatefile2)
     climatefile2=adjustl(climatefile2)
