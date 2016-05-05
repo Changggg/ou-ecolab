@@ -159,7 +159,7 @@
     
     call getarg(5,MCMCargu)
     read(MCMCargu,'(i1)') MCMC
-    !MCMC = 0
+    !MCMC = 2
 
     call getarg(6,DAparfile)
     !DAparfile='input/SPRUCE_da_pars.txt'
@@ -203,16 +203,16 @@
 
     call getarg(8,yrargu)
     read(yrargu,'(i4)') yrlim
-    yrlim = 2024
+    !yrlim = 2024
     call getarg(9,dyargu)
     read(dyargu,'(i3)') dylim
-    dylim = 365
+    !dylim = 365
     call getarg(10,Targu)
     read(Targu,'(f9.3)') Ttreat
-    Ttreat = 0.0
+    !Ttreat = 0.0
     call getarg(11,CO2argu) 
     read(CO2argu,'(f9.3)') CO2treat
-    CO2treat = 380.0
+    !CO2treat = 380.0
     
     
     DO rep=1,100
@@ -245,7 +245,7 @@
     
 !   Read generated climatic forcing
     call getarg(7,forcingdir)
-    forcingdir = 'input/Weathergenerate'
+    !forcingdir = 'input/Weathergenerate'
     write(climatefile2,"(A120,A10,I3.3,A4)") trim(forcingdir),"/EMforcing",rep,".csv"
     climatefile2=trim(climatefile2)
     climatefile2=adjustl(climatefile2)
@@ -945,9 +945,11 @@
                   !!       for Duke Forest
                   Tair=input_data(1,m)   ! Tair
                   Tsoil=input_data(2,m)    ! SLT
+                  co2ca=380.0*1.0E-6
                   if (yr .gt. 4)then
                       Tair = Tair + Ttreat
                       Tsoil = Tsoil + Ttreat
+                      co2ca=CO2treat*1.0E-6 ! CO2 concentration,ppm-->1.0E-6
                   endif                  
                   RH=input_data(3,m)
                   Dair=input_data(4,m)       !air water vapour defficit? Unit Pa
@@ -2995,7 +2997,7 @@
     integer, parameter :: iiterms=7
     integer,dimension(ilines):: year_seq,doy_seq,hour_seq
     real forcing_data(iiterms,ilines)
-    character(len=50) climatefile,commts
+    character(len=150) climatefile,commts
     integer m,n,istat1,lines,yr_length
 
     open(11,file=climatefile,status='old',ACTION='read',     &
