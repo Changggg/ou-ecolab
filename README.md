@@ -14,4 +14,3 @@
 
 [EcoPAD](http://ecolab.cybercommons.org/ecopad_portal/)
 
-![this is alternate text](myimage.png)
