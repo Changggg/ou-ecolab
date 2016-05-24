@@ -1,2 +1,6 @@
-# teco
-TECO SPRUCE
+# TECO SPRUCE
+
+#### INSTALL
+
+
+#### RUN
