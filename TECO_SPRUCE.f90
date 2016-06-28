@@ -9,7 +9,7 @@
     real Tau_Leaf,Tau_Wood,Tau_Root,Tau_F,Tau_C
     real Tau_Micro,Tau_slowSOM,Tau_Passive
     real gddonset,Q10,Rl0,Rs0,Rr0
-    real paraest(19,30000)
+    real paraest(19,40000)
     integer seq,Pselect
     character(len=120) parafile,daparfile,outdir
     character(len=150) paraestfile
@@ -94,7 +94,7 @@
     CO2treat = 380.0
 !   Read parameters from file
     call getarg(1,parafile)
-    !parafile='input/SPRUCE_pars.txt'
+!    parafile='input/SPRUCE_pars.txt'
     call Getparameters(lat,longi,wsmax,wsmin,           &              
     &   LAIMAX,LAIMIN,rdepth,Rootmax,Stemmax,           &
     &   SapR,SapS,SLA,GLmax,GRmax,Gsmax,stom_n,         &
@@ -114,13 +114,13 @@
 !   Read climatic forcing
 !    climatefile='SPRUCE_forcing.txt'
     call getarg(2,climatefile1)
-    !climatefile1='input/SPRUCE_forcing.txt'
+!    climatefile1='input/SPRUCE_forcing.txt'
     call Getclimate(year_seq1,doy_seq1,hour_seq1,          &
     &   forcing_data1,climatefile1,lines1,yr_length1)
 
 !   Read observation data
     call getarg(3,obsfile1)
-    !obsfile1='input/SPRUCE_obs.txt'
+!    obsfile1='input/SPRUCE_obs.txt'
     treatment=0.    ! Ambient temperature
     call GetObsData(obs_spruce,std,len1,obsfile1)      
             
@@ -146,12 +146,11 @@
     
 !   Start main loop
     call getarg(4,outdir)
-    !outdir = 'output'
+!    outdir = 'output'
     write(outfile,"(A120,A18)") trim(outdir),"/SPRUCE_yearly.txt"
     outfile = trim(outfile)
     outfile = adjustl(outfile)
     open(61,file=outfile)
-    
     write(outfile,"(A120,A22)") trim(outdir),"/Simu_dailyflux001.txt"
     outfile = trim(outfile)
     outfile = adjustl(outfile)
@@ -159,10 +158,10 @@
     
     call getarg(5,MCMCargu)
     read(MCMCargu,'(i1)') MCMC
-    !MCMC = 2
+!    MCMC = 2
 
     call getarg(6,DAparfile)
-    !DAparfile='input/SPRUCE_da_pars.txt'
+!    DAparfile='input/SPRUCE_da_pars.txt'
     call GetDAcheckbox(DApar,parmin,parmax,DAparfile)
 
     if(MCMC.eq.1) GOTO 100
@@ -203,16 +202,16 @@
 
     call getarg(8,yrargu)
     read(yrargu,'(i4)') yrlim
-    !yrlim = 2024
+!    yrlim = 2024
     call getarg(9,dyargu)
     read(dyargu,'(i3)') dylim
-    !dylim = 365
+!    dylim = 365
     call getarg(10,Targu)
     read(Targu,'(f9.3)') Ttreat
-    !Ttreat = 0.0
+!    Ttreat = 0.0
     call getarg(11,CO2argu) 
     read(CO2argu,'(f9.3)') CO2treat
-    !CO2treat = 380.0
+!    CO2treat = 380.0
     
     
     DO rep=1,100
@@ -245,7 +244,7 @@
     
 !   Read generated climatic forcing
     call getarg(7,forcingdir)
-    !forcingdir = 'input/Weathergenerate'
+!    forcingdir = 'input/Weathergenerate'
     write(climatefile2,"(A120,A10,I3.3,A4)") trim(forcingdir),"/EMforcing",rep,".csv"
     climatefile2=trim(climatefile2)
     climatefile2=adjustl(climatefile2)
@@ -953,7 +952,7 @@
                   endif                  
                   RH=input_data(3,m)
                   Dair=input_data(4,m)       !air water vapour defficit? Unit Pa
-                  co2ca=CO2treat*1.0E-6 ! CO2 concentration,ppm-->1.0E-6
+!                  co2ca=CO2treat*1.0E-6 ! CO2 concentration,ppm-->1.0E-6
 !                  if(isite==2.and.yr>yrs_eq)then
 !                      co2ca=(input_data(5,m)+200.)*1.0E-6
 !                  endif
@@ -978,16 +977,16 @@
                   if(radsol.gt.10.0) then
                       G=-25.0
                   else
-                      G=20.5											! What's G? -JJJJJJJJJJJJJJJJJJJJJJ
+                      G=20.5											
                   endif
                   Esoil=0.05*radsol
-                  if(radsol.LE.10.0) Esoil=0.5*G						! If solar radiation less than 10, Esoil = 10.25 -JJJJJJJJJJJJJJJJJJJJJ
+                  if(radsol.LE.10.0) Esoil=0.5*G						
                   Hcrop=0.1  ! never used in routine
                   Ecstot=0.1 ! never used in routine
                   Anet=0.1 ! never used in routine
                   DepH2O=0.2
 !                 for daily mean conditions
-                  VPD_d=VPD_d+Dair/24./1000.                ! Water vapour pressure or depecit ?? -JJJJJJJJJJJJJJJJJ, Change unit from Pa to KPa
+                  VPD_d=VPD_d+Dair/24./1000.               
                   PAR_D=PAR_D+radsol/dtimes                 ! umol photons m-2 s-1   
                   ta= ta + tair/24.0             ! sum of a day, for calculating daily mean temperature
                   Ts=Ts+Tsoil/24.0
@@ -1214,7 +1213,7 @@
               blLitter=QC(5) !-9999
 !            write(*,*)yr,days,LAI,gpp_d,npp_d
 
-            if(yr.gt.yrs_eq)then  
+!            if(yr.gt.yrs_eq)then  
                 daily=daily+1
   
             Simu_dailyflux(1,daily)=GPP_d ! Leaf
@@ -1230,8 +1229,8 @@
             Simu_dailyflux(11,daily)=pheno   ! Soil
             Simu_dailyflux(12,daily)=LAI !QC(1)/(QC(1)+QC(4)) 
             
-            endif
-            if(yr.ge.(yrlim-first_year+1) .and. days.ge.dylim) goto 650
+!            endif
+!            if(yr.ge.(yrlim-first_year+1) .and. days.ge.dylim) goto 650
         enddo                         ! end of idays
                 
             storage=accumulation
@@ -1240,10 +1239,11 @@
             write(*,*)yr,LAI,gpp_yr,NPP_yr,pheno
             write(61,601)year,LAI,gpp_yr,NPP_yr,real(pheno)
             endif
+                
             if(MCMC.ne.1) then
                 write(*,*)year,LAI,gpp_yr,NPP_yr,pheno
                 write(61,601)year,LAI,gpp_yr,NPP_yr,Ra_yr,Rh_yr, &
-                &   Rh4_yr,Rh5_yr,Rh6_yr,Rh7_yr,Rh8_yr,GL_yr,    &
+                &   ET,rain_yr,transp_yr,evap_yr,runoff_yr,GL_yr,    &
                 &   GW_yr,GR_yr,Pool1,Pool2,Pool3,Pool4,Pool5,   &
                 &   Pool6,Pool7,Pool8,out1_yr,out2_yr,out3_yr,   &
                 &   out4_yr,out5_yr,out6_yr,out7_yr,out8_yr
@@ -1697,11 +1697,12 @@
       SR_rs=(RS0*(2.-W))/(RS+RS0*(2.-W))
       Slai=amin1(1.0,2.333*(LAIMAX-LAI)/(LAIMAX-LAIMIN))
       St=AMAX1(0.0, 1.0-exp(-(Tair-gddonset/10.)/5.0))  !0.5 !
-      Sw=AMAX1(0.333, 0.333+omega)
+!      Sw=AMAX1(0.333, 0.333+omega)
+      Sw=AMIN1(0.5, AMAX1(0.333, 0.333+omega))
       W = AMIN1(1.0,3.333*omega)
 
 !     Plant growth and allocation, based on LM3V
-      GPmax=(GLmax*bmL+GSmax*StemSap+GRmax*bmR) !/acP					! Need to divide acP, g C day-1 -JJJJJJJJJJJJJJJJJJJJJJJJJJJJJ
+      GPmax=(GLmax*bmL+GSmax*StemSap+GRmax*bmR) !/acP					
       GrowthP=AMIN1(GPmax*fnsc*St*(1.-exp(-NSN)),  & ! 
      &              0.004*NSC,&
      &              0.004*NSN*CNp0)
@@ -1855,7 +1856,7 @@
 
 !     calculating soil scaling factors, S_omega and S_tmperature
       S_w_min=0.08 !minimum decomposition rate at zero soil moisture
-      S_omega=S_w_min + (1.-S_w_min) * Amin1(1.0,2.0*omega)
+      S_omega=S_w_min + (1.-S_w_min) * Amin1(1.0, 0.3*omega)
 
       do i=1,5
 !        S_t(i)=Q10h(i)**((Tsoil-5.)/10.)  ! Oak
@@ -2082,8 +2083,8 @@
       data Gaussw/0.1184635,0.2393144,0.2844444,0.2393144,0.1184635/
 
 !     soil water conditions
-      WILTPT=wsmax/100.
-      FILDCP=wsmin/100.
+      WILTPT=wsmin/100.
+      FILDCP=wsmax/100.
 !     reset the vairables
       Rnst1=0.0        !net rad, sunlit
       Rnst2=0.0        !net rad, shaded
@@ -2963,7 +2964,7 @@
                 
     character(len=50) paraestfile
     integer seq,m,n,istat6
-    real paraest(19,30000)
+    real paraest(19,40000)
     integer npara
     character(len=250) indexstring
 
