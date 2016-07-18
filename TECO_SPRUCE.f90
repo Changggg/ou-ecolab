@@ -94,7 +94,7 @@
     CO2treat = 380.0
 !   Read parameters from file
     call getarg(1,parafile)
-!    parafile='input/SPRUCE_pars.txt'
+    !parafile='input/SPRUCE_pars.txt'
     call Getparameters(lat,longi,wsmax,wsmin,           &              
     &   LAIMAX,LAIMIN,rdepth,Rootmax,Stemmax,           &
     &   SapR,SapS,SLA,GLmax,GRmax,Gsmax,stom_n,         &
@@ -114,13 +114,13 @@
 !   Read climatic forcing
 !    climatefile='SPRUCE_forcing.txt'
     call getarg(2,climatefile1)
-!    climatefile1='input/SPRUCE_forcing.txt'
+    !climatefile1='input/SPRUCE_forcing.txt'
     call Getclimate(year_seq1,doy_seq1,hour_seq1,          &
     &   forcing_data1,climatefile1,lines1,yr_length1)
 
 !   Read observation data
     call getarg(3,obsfile1)
-!    obsfile1='input/SPRUCE_obs.txt'
+    !obsfile1='input/SPRUCE_obs.txt'
     treatment=0.    ! Ambient temperature
     call GetObsData(obs_spruce,std,len1,obsfile1)      
             
@@ -141,12 +141,12 @@
 !   QC=(/300.,6300.,300.,119.,300.,322.,8834.,312./)
 !   QC=(/100.,800.,100.,39.,100.,122.,834.,12./)
  !   QC=(/440.,700.,300.,119.,300.,322.,38340.,23120./)
-    QC=(/500.,700.,300.,119.,300.,322.,38340.,23120./)
+    QC=(/300.,650.,100.,119.,300.,322.,38340.,23120./)
     
     
 !   Start main loop
     call getarg(4,outdir)
-!    outdir = 'output'
+    !outdir = 'output'
     write(outfile,"(A120,A18)") trim(outdir),"/SPRUCE_yearly.txt"
     outfile = trim(outfile)
     outfile = adjustl(outfile)
@@ -158,10 +158,10 @@
     
     call getarg(5,MCMCargu)
     read(MCMCargu,'(i1)') MCMC
-!    MCMC = 2
+    !MCMC = 2
 
     call getarg(6,DAparfile)
-!    DAparfile='input/SPRUCE_da_pars.txt'
+    !DAparfile='input/SPRUCE_da_pars.txt'
     call GetDAcheckbox(DApar,parmin,parmax,DAparfile)
 
     if(MCMC.eq.1) GOTO 100
@@ -202,16 +202,16 @@
 
     call getarg(8,yrargu)
     read(yrargu,'(i4)') yrlim
-!    yrlim = 2024
+    !yrlim = 2024
     call getarg(9,dyargu)
     read(dyargu,'(i3)') dylim
-!    dylim = 365
+    !dylim = 365
     call getarg(10,Targu)
     read(Targu,'(f9.3)') Ttreat
-!    Ttreat = 0.0
+    !Ttreat = 0.0
     call getarg(11,CO2argu) 
     read(CO2argu,'(f9.3)') CO2treat
-!    CO2treat = 380.0
+    !CO2treat = 380.0
     
     
     DO rep=1,100
@@ -244,7 +244,7 @@
     
 !   Read generated climatic forcing
     call getarg(7,forcingdir)
-!    forcingdir = 'input/Weathergenerate'
+    forcingdir = 'input/Weathergenerate'
     write(climatefile2,"(A120,A10,I3.3,A4)") trim(forcingdir),"/EMforcing",rep,".csv"
     climatefile2=trim(climatefile2)
     climatefile2=adjustl(climatefile2)
@@ -279,7 +279,7 @@
 !   QC=(/300.,6300.,300.,119.,300.,322.,8834.,312./)
 !   QC=(/100.,800.,100.,39.,100.,122.,834.,12./)
  !   QC=(/440.,700.,300.,119.,300.,322.,38340.,23120./)
-    QC=(/500.,700.,300.,119.,300.,322.,38340.,23120./)
+    QC=(/300.,650.,100.,119.,300.,322.,38340.,23120./)
     
     yrs_eq=yr_length*0  ! spin up length 
     call TECO_simu(MCMC,Simu_dailyflux,      &
@@ -1523,7 +1523,7 @@
     ENDIF
 
 !   runoff
-    runoff=INFILT*0.02
+    runoff=INFILT*0.0019   ! Shuang Modifed
     infilt = infilt-runoff
     
 !   water redistribution among soil layers
@@ -1545,8 +1545,8 @@
             wcl(i+1)=wsc(i+1)/(THKSL(i+1)*10.0)+wiltpt
         endif
     enddo
-    wsc(10)=wsc(10)-wsc(10)*0.0
-    runoff = runoff+wsc(10)*0.0
+    wsc(10)=wsc(10)-wsc(10)*0.00001     ! Shuang modifed
+    runoff = runoff+wsc(10)*0.00001     ! Shuang modifed
     wcl(10)=wsc(10)/(THKSL(10)*10.0)+wiltpt
 !    end of water redistribution among soil layers
 
