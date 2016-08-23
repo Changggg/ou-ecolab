@@ -244,7 +244,7 @@
     
 !   Read generated climatic forcing
     call getarg(7,forcingdir)
-    forcingdir = 'input/Weathergenerate'
+!    forcingdir = 'input/Weathergenerate'
     write(climatefile2,"(A120,A10,I3.3,A4)") trim(forcingdir),"/EMforcing",rep,".csv"
     climatefile2=trim(climatefile2)
     climatefile2=adjustl(climatefile2)
