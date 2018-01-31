@@ -14,7 +14,7 @@ SPRUCE_pars.txt : initial/default parameter values for TECO model
 
 SPRUCE_forcing.txt: forcing drivers include air temperature (Tair), soil temperature (Tsoil), relative humidity (RH), vapor pressure deficit (VPD), precipitation (Rain), wind speed (WS), and PAR.
 
-SPRUCE_da_pars.txt: this file is only used for data assimilation. It contains three blocks of parameter values. The first block has values of “0” or “1”. “1” represents the parameter is chosen for data assimilation; “0” represents the parameter is not chosen for data assimilation, default values would then be used in simulations.
+SPRUCE_da_pars.txt: this file is only used for data assimilation. It contains three blocks of parameter values. The first block has values of “0” or “1”. “1” represents the parameter is chosen for data assimilation; “0” represents the parameter is not chosen for data assimilation, default values would then be used in simulations. The second and third blocks of parameter are minimum and maximum values, respectively.
 
 SPRUCE_obs.txt: The pretreatment datasets from 2011to 2014 used for data assimilation. “days” means the number of days since 2011-01-01; “-9999” means the data is not available. See the paper for details on how the datasets were complied. 
 
@@ -31,19 +31,19 @@ SPRUCE_yearly.txt: This is yearly output from the simulation. The actual code to
 First, compile the fortran code: gfortran TECO_SPRUCE.f90 –o TECO.out
 
 Second, run the complied file using different argument options:
+	
+	 Option “0” model simulation (MCMC = 0), run the script:
 
- 		 Option “0” model simulation (MCMC = 0), run the script:
+ 		 ./TECO.out input/SPRUCE_pars.txt input/SPRUCE_forcing.txt input/SPRUCE_obs.txt output/ 0 input/SPRUCE_da_pars.txt
 
-  ./TECO.out input/SPRUCE_pars.txt input/SPRUCE_forcing.txt input/SPRUCE_obs.txt output/ 0 input/SPRUCE_da_pars.txt
+	 Option “1” data simulation (MCMC = 1), run the script:
 
-		 Option “1” data simulation (MCMC = 1), run the script:
-
-  ./TECO.out input/SPRUCE_pars.txt input/SPRUCE_forcing.txt input/SPRUCE_obs.txt output/ 1 input/SPRUCE_da_pars.txt
+  		./TECO.out input/SPRUCE_pars.txt input/SPRUCE_forcing.txt input/SPRUCE_obs.txt output/ 1 input/SPRUCE_da_pars.txt
 
 
-		 Option “2” forecasting (MCMC = 2), run the script:
+	 Option “2” forecasting (MCMC = 2), run the script:
 
-  ./TECO.out input/SPRUCE_pars.txt input/SPRUCE_forcing.txt input/SPRUCE_obs.txt output/ 2 input/SPRUCE_da_pars.txt input/Weathergenerate 2024 365 2.25 380.0
+		./TECO.out input/SPRUCE_pars.txt input/SPRUCE_forcing.txt input/SPRUCE_obs.txt output/ 2 input/SPRUCE_da_pars.txt input/Weathergenerate 2024 365 2.25 380.0
 
 The detail argument format and description is uploaded to argument_format.txt file.
 
